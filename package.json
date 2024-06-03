@@ -8,8 +8,13 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "axios": "^1.7.2",
     "core-js": "^3.8.3",
-    "vue": "^3.2.13"
+    "fs": "^0.0.1-security",
+    "plyr": "^3.7.8",
+    "vue": "^3.2.13",
+    "vue-router": "^4.3.2",
+    "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
