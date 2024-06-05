@@ -3,6 +3,7 @@
   <div class="video-player">
     <div v-if="isLoading">Loading video...</div>
     <video v-else controls :src="videoUrl" width="1280" height="720" type="video/mp4"></video>
+    <div v-if="!isLoading">Duration: {{ duration }} seconds</div>
   </div>
 </template>
 
@@ -17,28 +18,16 @@ export default {
   data() {
     return {
       videoUrl: '',
-      isLoading: true, // Add a new data property to track loading state
+      isLoading: true,
+      duration: 2,
     };
   },
-  mounted() {
-    // Fetch the video from the server
-    fetch(`http://localhost:3000/api/video/?videoId=${this.id}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch video');
-        }
-        // Assuming the server returns video content with the correct content type
-        return response.blob();
-      })
-      .then(blob => {
-        // Convert the blob into a URL for the video
-        this.videoUrl = URL.createObjectURL(blob);
-        this.isLoading = false; // Set isLoading to false when the video has loaded
-      })
-      .catch(error => {
-        console.error('Error fetching video:', error);
-        this.isLoading = false; // Set isLoading to false even if there was an error
-      });
+  async mounted() {
+    // Set the video URL directly to use the streaming endpoint
+    this.videoUrl = `http://localhost:3000/api/video/?videoId=${this.id}`;
+    this.isLoading = false;
+    
+    
   }
 };
 </script>
@@ -51,7 +40,6 @@ export default {
   padding: 20px;
   margin: 40px;
 }
-
 
 video {
   margin-bottom: 20px;

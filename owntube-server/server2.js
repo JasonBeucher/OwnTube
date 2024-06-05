@@ -114,70 +114,61 @@ app.get('/api/avatar', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch or process avatar' });
   }
 });
-
-app.get('/api/video/', async (req, res) => {
+// Add a new route to stream video content
+app.get('/api/video/', (req, res) => {
   const videoId = req.query.videoId;
   if (!videoId) {
     return res.status(400).json({ error: 'Missing videoId parameter' });
   }
   const url = `https://www.youtube.com/watch?v=${videoId}`;
 
-  try {
+  let video = ytdl(url, { filter: 'videoonly', quality: "highest"})
+  let audio = ytdl(url, { filter: 'audioonly', highWaterMark: 1 << 25 });
 
-    // Start streaming the video
-    let video = ytdl(url, { filter: 'videoonly', quality: "highest" });
-    let audio = ytdl(url, { filter: 'audioonly', highWaterMark: 1 << 25 });
 
-    // create the ffmpeg process for muxing
-    const ffmpegProcess = cp.spawn(
-      ffmpeg,
-      [
-        // input audio by pipe
-        "-i", "pipe:3",
+  // create the ffmpeg process for muxing
+  const ffmpegProcess = cp.spawn(
+    ffmpeg,
+    [
+      '-loglevel', '0', '-hide_banner',
+      // input audio by pipe
+      "-i", "pipe:3",
 
-        // input video by pipe
-        "-i", "pipe:4",
-        
-        // map audio and video correspondingly
-        "-map", "0:a",
-        "-map", "1:v",
-        "-strict", "experimental",
-        // change the codec
-        '-c:v', 'copy',
-        '-c:a', 'flac',
-        //   "-c:a", "aac",
-        '-crf', '30',
-        "-preset", "veryfast",
+      // input video by pipe
+      "-i", "pipe:4",
 
-        // Allow output to be seekable, which is needed for mp4 output
-        '-movflags', 'frag_keyframe+empty_moov',
+      // map audio and video correspondingly
+      "-map", "0:a",
+      "-map", "1:v",
 
-        // Define output container
-        '-f', 'mp4', 'pipe:5',
+      // change the codec
+      '-c:v', 'copy',
+      '-c:a', 'flac',
+      //   "-c:a", "aac",
+      '-crf', '30',
+      "-preset", "veryfast",
+
+      // Allow output to be seekable, which is needed for mp4 output
+      '-movflags', 'frag_keyframe+empty_moov',
+
+      // Define output container
+      '-f', 'mp4', 'pipe:5',
+    ],
+    {
+      // no popup window for Windows users
+      windowsHide: true,
+      stdio: [
+        // silence stdin/out, forward stderr,
+        "inherit", "inherit", "inherit",
+        // and pipe audio, video, output
+        "pipe", "pipe", "pipe",
       ],
-      {
-        // no popup window for Windows users
-        windowsHide: true,
-        stdio: [
-          // silence stdin/out, forward stderr,
-          "inherit", "inherit", "inherit",
-          // and pipe audio, video, output
-          "pipe", "pipe", "pipe",
-        ],
-      }
-    );
-
-    audio.pipe(ffmpegProcess.stdio[3]);
-    video.pipe(ffmpegProcess.stdio[4]);
-    // Pipe the output of ffmpeg to the response in the stream index of the response
-    ffmpegProcess.stdio[5].pipe(res);
-    
-
-
-  } catch (error) {
-    console.error('Error fetching video information:', error);
-    res.status(500).json({ error: 'Failed to fetch video information' });
-  }
+    }
+  );
+  
+  audio.pipe(ffmpegProcess.stdio[3]);
+  video.pipe(ffmpegProcess.stdio[4]);
+  ffmpegProcess.stdio[5].pipe(res);
 });
 
 app.get('/api/video2/', async (req, res) => {
