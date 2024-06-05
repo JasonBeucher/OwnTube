@@ -1,0 +1,10 @@
+- Ne pas charger la vidéo en une fois mais en chunk
+https://stackoverflow.com/questions/71371023/how-can-i-download-high-quality-you-tube-video-using-ytdl-core-package-in-nodejs
+
+- Page d'une chaine youtube
+
+- Recommendation sur le coté d'une vidéo
+
+- Paramètres
+
+- Création d'utilisateurs
